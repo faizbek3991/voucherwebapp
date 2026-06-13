@@ -66,7 +66,7 @@ const Login = () => {
       if (isLogin) {
         if (data.token) {
           localStorage.setItem('token', data.token);
-          navigate('/'); 
+          navigate('/Home'); 
         } else {
           throw new Error('Login successful, but no token was received.');
         }

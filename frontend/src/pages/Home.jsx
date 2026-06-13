@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Avatar } from 'primereact/avatar';
@@ -38,6 +39,7 @@ function formatVoucherValue(points) {
 }
 
 function Home() {
+  const navigate = useNavigate();
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -267,7 +269,11 @@ function Home() {
                       <span className="home-voucher__points">
                         {formatVoucherValue(voucher.points)}
                       </span>
-                      <Button label="View Details" size="small" />
+                      <Button 
+                        label="View Details" 
+                        size="small" 
+                        onClick={() => navigate('/voucher-detail')} 
+                      />
                     </div>
                   </Card>
                 </div>
