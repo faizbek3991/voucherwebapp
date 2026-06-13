@@ -1,4 +1,4 @@
-# Voucher Reward System - Backend
+# Voucher Reward System - MERN Stack
 
 A Node.js/Express backend for a voucher management system featuring cart functionality and category filtering.
 
