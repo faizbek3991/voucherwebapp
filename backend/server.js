@@ -27,7 +27,7 @@ app.get('/api/categories', async (req, res) => {
     }
 });
 
-// Use voucher routes
+app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/vouchers', require('./routes/voucherRoutes'));
 app.use('/api/cart', require('./routes/cartRoutes'));
 

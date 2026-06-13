@@ -26,6 +26,7 @@ coverage/
 .idea/
 .claude/
 
-# Sensitive files at root
+# Sensitive / personal files at root
 mongodb key.txt
 *.xlsx
+Day 2 prompt test voucher.txt

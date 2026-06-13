@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { InputText } from 'primereact/inputtext';
 import { Password } from 'primereact/password';
 import { Button } from 'primereact/button';
@@ -7,9 +8,13 @@ import { Message } from 'primereact/message';
 import { classNames } from 'primereact/utils';
 import './Login.css';
 
-const API = process.env.REACT_APP_API_URL;
+// 1. Defensive check for environment variables to prevent ReferenceErrors
+// 2. Provide a fallback URL for local development
+const API_BASE = (typeof process !== 'undefined' ? process.env.REACT_APP_API_URL : null) || 
+                 'http://localhost:5000/api';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     username: '',
@@ -42,7 +47,11 @@ const Login = () => {
       : { email: formData.email, password: formData.password, username: formData.username };
 
     try {
-      const response = await fetch(`${API}${endpoint}`, {
+      // Ensure no double slashes in the URL construction
+      const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+      const url = `${cleanBase}${endpoint}`;
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -55,8 +64,12 @@ const Login = () => {
       }
 
       if (isLogin) {
-        localStorage.setItem('token', data.token);
-        window.location.href = '/'; // Simple redirect to home
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          navigate('/'); 
+        } else {
+          throw new Error('Login successful, but no token was received.');
+        }
       } else {
         alert('Account created! Please sign in.');
         setIsLogin(true);
