@@ -147,7 +147,13 @@ function Home() {
               severity="secondary"
               aria-label="Notifications"
             />
-            <Avatar image={profileImage} shape="circle" size="large" />
+            <Avatar
+              image={profileImage}
+              shape="circle"
+              size="large"
+              style={{ cursor: 'pointer' }}
+              onClick={() => navigate('/profile')}
+            />
           </div>
         </div>
       </header>
@@ -272,7 +278,7 @@ function Home() {
                       <Button 
                         label="View Details" 
                         size="small" 
-                        onClick={() => navigate('/voucher-detail')} 
+                        onClick={() => navigate('/voucher-detail', { state: { voucher } })}
                       />
                     </div>
                   </Card>

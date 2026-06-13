@@ -1,21 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Avatar } from 'primereact/avatar';
 import { Badge } from 'primereact/badge';
 import { Tag } from 'primereact/tag';
 import { Card } from 'primereact/card';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { Message } from 'primereact/message';
-import { BreadCrumb } from 'primereact/breadcrumb';
-import { Checkbox } from 'primereact/checkbox';
-import { RadioButton } from 'primereact/radiobutton';
-import { Dropdown } from 'primereact/dropdown';
 import { Toast } from 'primereact/toast';
-import { getVouchers } from '../api/vouchers';
+import { BreadCrumb } from 'primereact/breadcrumb';
 import './Home.css';
 
 const navItems = ['Explore', 'Deals', 'Rewards', 'Wallet'];
+
+const profileImage =
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuCBSuIxUxfHg4wgNs3r-LO4qo6VNboOmg9Kb3aXO51jImuiyOFvXuTrd1wLc7zuGzCYjXZ5uW-DcC-AM0Dx6_HcT74tKyPAwBRGp9jf4ENR6pu1lD2E_6w-CWtUcsf33qMmCjPjGRar-Zs9Ux64NQXcqqYWPA6KLkOYxYtkNHGbhGV1nufUeRWL1bJjpYyc06lh1E3ZH_apHor12onMvLgo1q_GTHEL_AAjC1AMDXJ4yvYmKVbneaw-U35QqqQp0k0tHC7X_odbbPf5';
+
 const categoryIcons = {
   'Food & Beverage': 'pi-apple',
   Shopping: 'pi-shopping-bag',
@@ -23,91 +22,67 @@ const categoryIcons = {
   Health: 'pi-heart',
   Entertainment: 'pi-video',
   Lifestyle: 'pi-star',
-  General: 'pi-gift'
+  General: 'pi-gift',
 };
-
-const profileImage =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuCBSuIxUxfHg4wgNs3r-LO4qo6VNboOmg9Kb3aXO51jImuiyOFvXuTrd1wLc7zuGzCYjXZ5uW-DcC-AM0Dx6_HcT74tKyPAwBRGp9jf4ENR6pu1lD2E_6w-CWtUcsf33qMmCjPjGRar-Zs9Ux64NQXcqqYWPA6KLkOYxYtkNHGbhGV1nufUeRWL1bJjpYyc06lh1E3ZH_apHor12onMvLgo1q_GTHEL_AAjC1AMDXJ4yvYmKVbneaw-U35QqqQp0k0tHC7X_odbbPf5';
-
-function formatCategoryName(voucher) {
-  return voucher.category_id?.name || 'General';
-}
 
 function formatVoucherValue(points) {
   return `${Number(points || 0).toLocaleString()} pts`;
 }
 
 function VoucherDetail() {
-  const [vouchers, setVouchers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [selectedPrices, setSelectedPrices] = useState([]);
-  const [selectedBrand, setSelectedBrand] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
   const toast = useRef(null);
+  const voucher = location.state?.voucher;
+
+  if (!voucher) {
+    return (
+      <div className="home-shell" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <i className="pi pi-exclamation-circle" style={{ fontSize: '3rem', color: '#6c757d', display: 'block', marginBottom: '1rem' }} />
+          <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>No voucher selected.</p>
+          <Button label="Back to Home" icon="pi pi-arrow-left" onClick={() => navigate('/Home')} />
+        </div>
+      </div>
+    );
+  }
+
+  const categoryName = voucher.category_id?.name || 'General';
+  const categoryIcon = categoryIcons[categoryName] || categoryIcons.General;
 
   const breadcrumbItems = [
-    { label: 'Categories' },
-    { label: 'Food & Dining', className: 'font-bold text-primary' }
+    { label: categoryName, command: () => navigate('/Home') },
+    { label: voucher.title },
   ];
-  const breadcrumbHome = { icon: 'pi pi-home', url: '/' };
+  const breadcrumbHome = { icon: 'pi pi-home', command: () => navigate('/Home') };
 
-  const sortOptions = [
-    { label: 'Recommended', value: 'rec' },
-    { label: 'Newest First', value: 'new' },
-    { label: 'Points: Low to High', value: 'pts_asc' }
-  ];
-
-  useEffect(() => {
-    async function loadVouchers() {
-      try {
-        const data = await getVouchers();
-        setVouchers(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError(err.message || 'Failed to load vouchers');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadVouchers();
-  }, []);
-
-  const onPriceChange = (e) => {
-    let _selectedPrices = [...selectedPrices];
-    if (e.checked) _selectedPrices.push(e.value);
-    else _selectedPrices.splice(_selectedPrices.indexOf(e.value), 1);
-    setSelectedPrices(_selectedPrices);
-  };
-
-  const handleRedeem = (voucher) => {
+  const handleRedeem = () => {
     toast.current.show({
       severity: 'success',
-      summary: 'Voucher Redeemed',
-      detail: `${voucher.title} added to wallet!`,
-      life: 3000
+      summary: 'Voucher Redeemed!',
+      detail: `${voucher.title} has been added to your wallet.`,
+      life: 3000,
     });
   };
 
   return (
     <div className="home-shell">
       <Toast ref={toast} />
-      
-      {/* ---------- Top bar (Same as Home) ---------- */}
+
+      {/* Top bar */}
       <header className="home-topbar">
         <div className="home-topbar__inner">
           <div className="flex align-items-center gap-4">
-            <span className="home-brand">
+            <span className="home-brand" style={{ cursor: 'pointer' }} onClick={() => navigate('/Home')}>
               <i className="pi pi-ticket mr-2" />
               Carter Redeem
             </span>
             <nav className="home-nav hidden lg:flex gap-3">
-              {navItems.map((item, index) => (
-                <a key={item} href="/" className={`home-nav__link${index === 1 ? ' is-active' : ''}`}>
-                  {item}
-                </a>
+              {navItems.map((item) => (
+                <a key={item} href="/Home" className="home-nav__link">{item}</a>
               ))}
             </nav>
           </div>
-
           <div className="flex align-items-center gap-3">
             <span className="p-input-icon-left hidden md:inline-block">
               <i className="pi pi-search" />
@@ -121,130 +96,142 @@ function VoucherDetail() {
         </div>
       </header>
 
-      <main className="home-main max-w-container-max mx-auto px-4 py-4">
-        <BreadCrumb model={breadcrumbItems} home={breadcrumbHome} className="border-none bg-transparent p-0 mb-4" />
+      <main className="home-main" style={{ maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem' }}>
+        <BreadCrumb
+          model={breadcrumbItems}
+          home={breadcrumbHome}
+          className="border-none bg-transparent p-0 mb-4"
+        />
 
-        <div className="grid mt-2">
-          {/* ---------- Sidebar Filters ---------- */}
-          <aside className="col-12 md:col-3 pr-4">
-            <div className="mb-4 pb-3 border-bottom-1 border-300">
-              <h2 className="text-2xl font-bold mb-1">Food & Dining</h2>
-              <p className="text-secondary text-sm">{vouchers.length} vouchers available</p>
-            </div>
-
-            <div className="mb-5">
-              <h4 className="font-bold mb-3">Price Range</h4>
-              <div className="flex flex-column gap-2">
-                {['Under 1,000 pts', '1,000 - 5,000 pts', 'Over 5,000 pts'].map(price => (
-                  <div key={price} className="flex align-items-center">
-                    <Checkbox inputId={price} value={price} onChange={onPriceChange} checked={selectedPrices.includes(price)} />
-                    <label htmlFor={price} className="ml-2 text-sm">{price}</label>
-                  </div>
-                ))}
+        <div className="grid">
+          {/* Left column: hero + details */}
+          <div className="col-12 lg:col-8">
+            {/* Hero image */}
+            <div className="relative border-round-xl overflow-hidden shadow-1 mb-4" style={{ position: 'relative' }}>
+              <img
+                src={
+                  voucher.image ||
+                  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80'
+                }
+                alt={voucher.title}
+                style={{ width: '100%', aspectRatio: '21/9', objectFit: 'cover', display: 'block' }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 60%)',
+                }}
+              />
+              <div style={{ position: 'absolute', bottom: '1.5rem', left: '1.5rem' }}>
+                <Tag
+                  value={categoryName}
+                  icon={`pi ${categoryIcon}`}
+                  severity="warning"
+                  rounded
+                  style={{ display: 'inline-flex', marginBottom: '0.5rem' }}
+                />
+                <h1 style={{ color: '#fff', margin: 0, fontSize: '1.8rem', fontWeight: 700, lineHeight: 1.25 }}>
+                  {voucher.title}
+                </h1>
               </div>
             </div>
 
-            <div className="mb-5">
-              <h4 className="font-bold mb-3">Discount %</h4>
-              <div className="flex flex-wrap gap-2">
-                {['10% Off', '25% Off', '50% Off', 'BOGO'].map(tag => (
-                  <Button key={tag} label={tag} size="small" outlined className="p-button-rounded text-xs" />
-                ))}
-              </div>
-            </div>
+            {/* Details card */}
+            <Card className="shadow-1 border-none mb-4">
+              <h2 className="text-xl font-bold mb-3">About this Voucher</h2>
+              <p className="line-height-3" style={{ color: '#6c757d' }}>
+                {voucher.description || 'Enjoy this exclusive voucher and experience premium quality service.'}
+              </p>
 
-            <div className="mb-5">
-              <h4 className="font-bold mb-3">Popular Brands</h4>
-              <div className="flex flex-column gap-2">
-                {['Gourmet Garden', 'The Steakhouse', 'Coffee Co.'].map(brand => (
-                  <div key={brand} className="flex align-items-center">
-                    <RadioButton inputId={brand} value={brand} onChange={(e) => setSelectedBrand(e.value)} checked={selectedBrand === brand} />
-                    <label htmlFor={brand} className="ml-2 text-sm">{brand}</label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </aside>
-
-          {/* ---------- Main Content ---------- */}
-          <section className="col-12 md:col-9">
-            <div className="flex align-items-center justify-content-between mb-4 bg-white p-3 border-round-xl shadow-1 border-1 border-50">
-              <div className="flex align-items-center gap-2">
-                <span className="text-sm text-secondary">Sort by:</span>
-                <Dropdown options={sortOptions} placeholder="Recommended" className="border-none text-sm p-0" />
-              </div>
-              <div className="flex gap-2">
-                <Button icon="pi pi-th-large" text size="small" />
-                <Button icon="pi pi-list" text size="small" severity="secondary" />
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="flex justify-content-center py-6">
-                <ProgressSpinner style={{ width: '50px', height: '50px' }} />
-              </div>
-            ) : error ? (
-              <Message severity="error" text={error} className="w-full" />
-            ) : (
-              <div className="grid">
-                {vouchers.map((voucher) => (
-                  <div className="col-12 md:col-6 lg:col-4 mb-4" key={voucher._id}>
-                    <Card className="home-voucher h-full shadow-1 border-none hover:shadow-3 transition-all transition-duration-200">
-                      <div className="home-voucher__image-wrap">
-                        <img
-                          alt={voucher.title}
-                          className="home-voucher__image"
-                          src={voucher.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80'}
-                        />
-                        <Tag
-                          className="home-voucher__badge"
-                          value={formatVoucherValue(voucher.points)}
-                          severity="warning"
-                          rounded
-                        />
-                        <div className="home-voucher__brand">
-                          <i className={`pi ${categoryIcons[formatCategoryName(voucher)] || categoryIcons.General}`} />
-                          <span>{formatCategoryName(voucher)}</span>
-                        </div>
-                      </div>
-
-                      <h3 className="home-voucher__title mt-3 mb-1 text-lg font-bold">{voucher.title}</h3>
-                      <p className="home-voucher__desc text-sm line-height-3 mb-3 text-secondary">
-                        {voucher.description || 'Enjoy premium dining and exclusive flavors.'}
-                      </p>
-                      
-                      <div className="flex align-items-center gap-2 mb-3">
-                        <i className="pi pi-star-fill text-yellow-500 text-xs" />
-                        <span className="text-xs font-bold">4.8</span>
-                        <span className="text-xs text-secondary">(1.2k reviews)</span>
-                      </div>
-
-                      <div className="home-voucher__footer pt-3 border-top-1 border-50">
-                        <span className="home-voucher__points text-xl font-bold">
-                          {formatVoucherValue(voucher.points)}
-                        </span>
-                        <Button label="Redeem Now" size="small" onClick={() => handleRedeem(voucher)} />
-                      </div>
-                    </Card>
-                  </div>
-                ))}
-                
-                <div className="col-12">
-                  <div className="flex flex-column align-items-center justify-content-center p-6 border-2 border-dashed border-300 border-round-xl bg-gray-50 cursor-pointer hover:bg-white transition-all">
-                    <div className="w-3rem h-3rem border-circle bg-white flex align-items-center justify-content-center mb-3 shadow-1">
-                      <i className="pi pi-plus text-primary" />
+              <div className="grid mt-4">
+                <div className="col-12 md:col-6">
+                  <div className="flex align-items-start gap-3 p-3 border-round-lg" style={{ background: '#f8f9fa' }}>
+                    <i className="pi pi-check-circle mt-1" style={{ color: '#22c55e', fontSize: '1.25rem' }} />
+                    <div>
+                      <p className="font-semibold mb-1">Instant Redemption</p>
+                      <p className="text-sm" style={{ color: '#6c757d' }}>Use your code immediately after redemption.</p>
                     </div>
-                    <p className="font-bold mb-1">View More Offers</p>
-                    <p className="text-secondary text-xs">Showing {vouchers.length} vouchers</p>
+                  </div>
+                </div>
+                <div className="col-12 md:col-6">
+                  <div className="flex align-items-start gap-3 p-3 border-round-lg" style={{ background: '#f8f9fa' }}>
+                    <i className="pi pi-calendar mt-1" style={{ color: '#3b82f6', fontSize: '1.25rem' }} />
+                    <div>
+                      <p className="font-semibold mb-1">6-Month Validity</p>
+                      <p className="text-sm" style={{ color: '#6c757d' }}>Valid for 180 days from the date of issue.</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            )}
-          </section>
+
+              <h3 className="text-lg font-bold mt-4 mb-3">Terms &amp; Conditions</h3>
+              <ul style={{ paddingLeft: '1.25rem', color: '#6c757d', lineHeight: 2 }}>
+                <li>Valid for one person per voucher.</li>
+                <li>Advance booking required; subject to availability.</li>
+                <li>Not valid during public holidays or special event weekends.</li>
+                <li>Cannot be combined with any other promotional offers or discounts.</li>
+                <li>Non-refundable once redeemed or after expiration date.</li>
+              </ul>
+            </Card>
+          </div>
+
+          {/* Right column: redeem card */}
+          <div className="col-12 lg:col-4">
+            <div style={{ position: 'sticky', top: '5rem' }}>
+              <Card className="shadow-2 border-none mb-3">
+                <div className="flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <p className="text-sm mb-1" style={{ color: '#6c757d' }}>Required Points</p>
+                    <p className="font-bold" style={{ fontSize: '2rem', margin: 0 }}>
+                      {formatVoucherValue(voucher.points)}
+                    </p>
+                  </div>
+                  <Tag value="Available" severity="success" rounded />
+                </div>
+
+                <div className="flex align-items-center gap-2 mb-4">
+                  <i className="pi pi-star-fill" style={{ color: '#f59e0b' }} />
+                  <span className="font-bold">4.8</span>
+                  <span className="text-sm" style={{ color: '#6c757d' }}>(1.2k reviews)</span>
+                </div>
+
+                <Button
+                  label="Redeem Now"
+                  icon="pi pi-check"
+                  className="w-full mb-3"
+                  onClick={handleRedeem}
+                />
+                <Button
+                  label="Add to Cart"
+                  icon="pi pi-shopping-cart"
+                  className="w-full"
+                  outlined
+                  onClick={() => navigate('/checkout', { state: { voucher } })}
+                />
+
+                <div
+                  className="flex align-items-center gap-2 mt-4 pt-3"
+                  style={{ borderTop: '1px solid #dee2e6' }}
+                >
+                  <i className="pi pi-shield" style={{ color: '#22c55e' }} />
+                  <span className="text-sm" style={{ color: '#6c757d' }}>Secured Redemption Guarantee</span>
+                </div>
+              </Card>
+
+              <Button
+                label="Back to Home"
+                icon="pi pi-arrow-left"
+                text
+                className="w-full"
+                onClick={() => navigate('/Home')}
+              />
+            </div>
+          </div>
         </div>
       </main>
 
-      {/* ---------- Footer (Same as Home) ---------- */}
+      {/* Footer */}
       <footer className="home-footer">
         <div className="home-footer__inner grid">
           <div className="col-12 md:col-5">
@@ -253,8 +240,7 @@ function VoucherDetail() {
               Carter Redeem
             </span>
             <p className="mt-2 text-sm opacity-70">
-              A modern voucher home page powered by your React frontend and MongoDB
-              backend.
+              A modern voucher platform powered by React and MongoDB.
             </p>
           </div>
           <div className="col-6 md:col-2">
