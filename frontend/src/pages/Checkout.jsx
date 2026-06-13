@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
+import QRCode from 'qrcode';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Avatar } from 'primereact/avatar';
@@ -96,9 +98,104 @@ function Checkout() {
     }, 800);
   };
 
+  const downloadPDF = async () => {
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const W = doc.internal.pageSize.getWidth();
+    const code = 'VW-8821-X90';
+    const now = new Date().toLocaleString();
+
+    // Generate QR code as data URL
+    const qrDataUrl = await QRCode.toDataURL(code, { width: 160, margin: 1, color: { dark: '#0f6b45', light: '#ffffff' } });
+
+    // Header band
+    doc.setFillColor(15, 107, 69);
+    doc.rect(0, 0, W, 90, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(26).setFont('helvetica', 'bold');
+    doc.text('CARTER REDEEM', W / 2, 45, { align: 'center' });
+    doc.setFontSize(12).setFont('helvetica', 'normal');
+    doc.text('Loyalty Voucher — Official Redemption Receipt', W / 2, 68, { align: 'center' });
+
+    // Divider
+    doc.setDrawColor(15, 107, 69);
+    doc.setLineWidth(2);
+    doc.line(40, 110, W - 40, 110);
+
+    // Voucher items
+    doc.setTextColor(30, 30, 30);
+    doc.setFontSize(14).setFont('helvetica', 'bold');
+    doc.text('Voucher(s) Redeemed', 40, 140);
+
+    let y = 165;
+    items.forEach((item) => {
+      doc.setFontSize(11).setFont('helvetica', 'bold');
+      doc.text(`• ${item.title}`, 50, y);
+      doc.setFont('helvetica', 'normal').setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`  ${item.subtitle}   ×${item.qty}   ${item.unit === 'pts' ? `${(item.price * item.qty).toLocaleString()} pts` : `$${(item.price * item.qty).toFixed(2)}`}`, 50, y + 16);
+      doc.setTextColor(30, 30, 30);
+      y += 42;
+    });
+
+    // Summary box
+    y += 10;
+    doc.setFillColor(240, 249, 244);
+    doc.roundedRect(40, y, W - 80, usePts ? 60 : 90, 6, 6, 'F');
+    doc.setFontSize(11).setFont('helvetica', 'normal').setTextColor(80, 80, 80);
+    doc.text(`Subtotal:`, 60, y + 22);
+    doc.setFont('helvetica', 'bold').setTextColor(30, 30, 30);
+    doc.text(fmt(subtotal), W - 60, y + 22, { align: 'right' });
+    if (!usePts) {
+      doc.setFont('helvetica', 'normal').setTextColor(80, 80, 80);
+      doc.text('Service Fee:', 60, y + 42);
+      doc.setFont('helvetica', 'bold').setTextColor(30, 30, 30);
+      doc.text(fmt(SERVICE_FEE), W - 60, y + 42, { align: 'right' });
+      doc.setFont('helvetica', 'normal').setTextColor(22, 163, 74);
+      doc.text('Discount:', 60, y + 62);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`-${fmt(DISCOUNT)}`, W - 60, y + 62, { align: 'right' });
+      y += 30;
+    }
+    doc.setFontSize(13).setFont('helvetica', 'bold').setTextColor(15, 107, 69);
+    doc.text('Total:', 60, y + 52);
+    doc.text(fmt(total), W - 60, y + 52, { align: 'right' });
+
+    // Redemption code + QR box
+    y += usePts ? 90 : 100;
+    const boxH = 130;
+    const qrSize = 100;
+    const qrX = W - 40 - qrSize - 16;
+    const qrY = y + (boxH - qrSize) / 2;
+
+    doc.setFillColor(15, 107, 69);
+    doc.roundedRect(40, y, W - 80, boxH, 8, 8, 'F');
+
+    // Text side
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11).setFont('helvetica', 'normal');
+    doc.text('REDEMPTION CODE', 60, y + 28);
+    doc.setFontSize(26).setFont('courier', 'bold');
+    doc.text(code, 60, y + 68);
+    doc.setFontSize(9).setFont('helvetica', 'normal');
+    doc.text('Present this code or scan the QR at the counter', 60, y + 90);
+    doc.text('Valid for single use only', 60, y + 106);
+
+    // QR code image (white background card)
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(qrX - 6, qrY - 6, qrSize + 12, qrSize + 12, 4, 4, 'F');
+    doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+
+    // Date & terms
+    doc.setTextColor(120, 120, 120).setFontSize(9).setFont('helvetica', 'normal');
+    doc.text(`Generated: ${now}`, 40, y);
+    doc.text('Non-transferable. Not redeemable for cash.', W / 2, y + 16, { align: 'center' });
+
+    doc.save(`CartRedeem_${code}.pdf`);
+  };
+
   const successDialogFooter = (
     <div className="flex flex-column gap-2 w-full">
-      <Button label="Download PDF Voucher" icon="pi pi-download" className="w-full" />
+      <Button label="Download PDF Voucher" icon="pi pi-download" className="w-full" onClick={downloadPDF} />
       <Button
         label="Back to Home"
         icon="pi pi-home"
