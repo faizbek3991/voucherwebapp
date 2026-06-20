@@ -38,7 +38,7 @@ if (process.env.NODE_ENV === 'production' || process.env.SERVE_STATIC === 'true'
     app.use(express.static(path.join(__dirname, '../frontend/build')));
 
     // Any route that doesn't match the API routes above should load index.html
-    app.get('*', (req, res) => {
+    app.get('(.*)', (req, res) => {
         res.sendFile(path.resolve(__dirname, '../frontend', 'build', 'index.html'));
     });
 }
