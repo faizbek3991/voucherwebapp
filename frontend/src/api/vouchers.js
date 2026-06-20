@@ -1,4 +1,4 @@
-const API = process.env.REACT_APP_API_URL;
+const API = process.env.REACT_APP_API_URL || '/api';
 
 export async function getVouchers() {
   const response = await fetch(`${API}/vouchers`);

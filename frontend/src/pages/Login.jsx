@@ -10,8 +10,7 @@ import './Login.css';
 
 // 1. Defensive check for environment variables to prevent ReferenceErrors
 // 2. Provide a fallback URL for local development
-const API_BASE = (typeof process !== 'undefined' ? process.env.REACT_APP_API_URL : null) || 
-                 'http://localhost:5000/api';
+const API_BASE = process.env.REACT_APP_API_URL || '/api';
 
 const Login = () => {
   const navigate = useNavigate();
