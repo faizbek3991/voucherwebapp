@@ -30,3 +30,5 @@ coverage/
 mongodb key.txt
 *.xlsx
 Day 2 prompt test voucher.txt
+seed.js
+
