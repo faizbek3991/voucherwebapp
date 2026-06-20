@@ -9,7 +9,7 @@ import { Badge } from 'primereact/badge';
 import { Card } from 'primereact/card';
 import { Dialog } from 'primereact/dialog';
 import { Divider } from 'primereact/divider';
-import { Tag } from 'primereact/tag';
+//import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import './Home.css';
 
