@@ -32,16 +32,13 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/vouchers', require('./routes/voucherRoutes'));
 app.use('/api/cart', require('./routes/cartRoutes'));
 
-// Serve static assets in production
-if (process.env.NODE_ENV === 'production' || process.env.SERVE_STATIC === 'true') {
-    // Set static folder
-    app.use(express.static(path.join(__dirname, '../frontend/build')));
+// Always serve React frontend static build
+app.use(express.static(path.join(__dirname, '../frontend/build')));
 
-    // Any route that doesn't match the API routes above should load index.html
-    app.get(/.*/, (req, res) => {
-        res.sendFile(path.resolve(__dirname, '../frontend', 'build', 'index.html'));
-    });
-}
+// Any route that doesn't match the API routes above should load index.html
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend', 'build', 'index.html'));
+});
 
 const PORT = process.env.PORT || 5000;
 
